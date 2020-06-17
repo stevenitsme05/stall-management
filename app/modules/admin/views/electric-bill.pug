@@ -1,0 +1,165 @@
+extends ./template.pug
+
+block content
+	.row
+		.col-md-12
+			.card
+				.card-header
+					h4.card-title Electric Bills
+				.card-body
+					.toolbar
+						button.btn.btn-round.btn-success(data-toggle='modal' data-target='#addElectricModal') + Add Electric Bill
+					br
+					table#electricTable.table.table-bordered.table-striped(cellspacing='0')
+						thead
+							tr
+								th Bill Date
+								th Amount Due
+								th KwH Used
+								th Due Date
+								th Status
+						tbody
+							each bill in electric
+								tr
+									td #{bill.billDate}
+									td #{bill.dblTotalAmountDue}
+									td #{bill.intTotalKwhUsage}
+									td #{bill.intDueMonth}/#{bill.intDueDay}/#{bill.intDueYear}
+									- if (bill.booStatus == 0)
+										td.text-warning Pending
+									- else if (bill.booStatus == 1)
+										td
+											button.btn.btn-info.btn-sm.btn-round.view(billId=`${bill.intId}`) Consumption Encoded
+									- else if (bill.booStatus == 2)
+										td
+											button.btn.btn-success.btn-sm.btn-round Consumption Validated
+	//MODALS
+	#addElectricModal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+		.modal-dialog(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Add Electric Bill
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				form#addElectricForm(method='POST' action='/admin/add-electric')
+					.modal-body
+							.form-group
+								label Total Amount Due
+									small.text-danger  *
+								input.form-control(type='text' name='totalAmountDue' placeholder='Enter Total Amount Due')
+							.form-group
+								label Total KwH Usage
+									small.text-danger  *
+								input.form-control(type='text' name='totalKwHUsage' placeholder='Enter Total KwH Usage')
+							.form-group
+								label Due Date
+									small.text-danger  *
+								input.form-control.datepicker(type='text' name='dueDate' placeholder='Enter Due Date')
+					.modal-footer
+						button#addElectricSave.btn.btn-primary(type='submit') Save
+	#viewModal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+		.modal-dialog.modal-xl(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Encoded Usage of Tenants
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				.modal-body
+					.table-responsive
+						table.table
+							thead
+								tr
+									th Stall ID
+									th Previous Meter Reading
+									th Current Meter Reading
+									th Consumption
+									th Amount Due
+							tbody#viewModalTableBody
+				.modal-footer
+					button#validate.btn.btn-success Validate
+					button#decline.btn.btn-danger Decline
+block contentScript
+	script(src='/assets/plugins/pdfmake/pdfmake.min.js')
+	script(src='/assets/plugins/pdfmake/vfs_fonts.js')
+	script.
+		$(document).ready(function(){
+			$('#electricTable').dataTable();
+			$('.datepicker').datetimepicker({
+				format: 'MM/DD/YYYY',
+			});
+			$('#addElectricForm').validate({
+				rules:{
+					totalAmountDue:{
+						required:true,
+						number:true
+					},
+					totalKwHUsage:{
+						required:true,
+						number: true
+					},
+					dueDate:{
+						required:true
+					},
+				}
+			})
+			$('#addElectricForm').on('submit', function(e) {
+				e.preventDefault()
+				if($('#addElectricForm').valid())
+				$.post('/admin/validate-duedate', {
+					month: moment($('#addElectricForm input[name="dueDate"]').val()).format('MM'),
+					year: moment($('#addElectricForm input[name="dueDate"]').val()).format('YYYY'),
+					type: 'electric'
+				}).done(function(data){
+					if(!data.valid){
+						swal({
+							title: `Invalid Input`,
+							text: `Bill for ${moment($('#addElectricForm input[name="dueDate"]').val()).format('MMMM YYYY')} already exists`,
+							type: 'error'
+						})
+					}
+					else{
+						$.post('/admin/add-electric', {
+							totalAmountDue: $('#addElectricForm input[name="totalAmountDue"]').val() ,
+							totalKwHUsage: $('#addElectricForm input[name="totalKwHUsage"]').val() ,
+							dueDate: $('#addElectricForm input[name="dueDate"]').val()
+						}).done(function(){
+							location.href= '/admin/electric-bill';
+						})
+					}
+				})
+			})
+			$('.view').on('click', function(){
+				$.post('/admin/get-encoded', {type: 'electric', id: $(this).attr('billId')})
+				.done(function(data){
+					for(let f=0; f < data.length; f++){
+						$('#viewModalTableBody').append(`
+							<tr>
+								<td><h6 class="text-primary">Stall ${data[f].strStallId}</h6></td>
+								<td>${data[f].intPreviousMeterReading}</td>
+								<td>${data[f].intMeterReading}</td>
+								<td>${data[f].intTotalKwhUsage}KwH</td>
+								<td>P ${data[f].dblAmountDue}</td>
+							</tr>
+						`)
+					}
+				})
+				$('#viewModal').modal('show')
+				$('#validate').attr('billId', $(this).attr('billId'))
+				$('#decline').attr('billId', $(this).attr('billId'))
+			})
+			$('#viewModal').on('hidden.bs.modal', function() {
+				$('#viewModalTableBody').empty()
+			})
+			$('#validate').on('click', function(){
+				$.post('/admin/validate-bill', {type: 'electric', id: $(this).attr('billId')})
+				.done(function (){
+					location.href='/admin/electric-bill'
+				})
+			})
+			$('#decline').on('click', function(){
+				$.post('/admin/decline-bill', {type: 'electric', id: $(this).attr('billId')})
+				.done(function (){
+					location.href='/admin/electric-bill'
+				})
+			})
+		})

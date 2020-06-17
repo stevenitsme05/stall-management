@@ -1,0 +1,175 @@
+extends ./template.pug
+
+block content
+	.row
+		.col-md-12
+			.card
+				.card-header
+					h4.card-title Electric Bills
+				.card-body
+					table#electricTable.table.table-bordered.table-striped(cellspacing='0')
+						thead
+							tr
+								th Bill Date
+								th Amount Due
+								th KwH Used
+								th Actions
+						tbody
+							each bill in electric
+								tr
+									td #{bill.billDate}
+									td #{bill.dblTotalAmountDue}
+									td #{bill.intTotalKwhUsage}
+									td
+										- if (bill.booStatus == 0)
+											button.encodeElectricOpen.btn.btn-primary.btn-round(billId=`${bill.intId}` totalKwh=`${bill.intTotalKwhUsage}` amountDue=`${bill.dblTotalAmountDue}` dueDate=`${bill.intDueYear}-${bill.intDueMonth}-${bill.intDueDay}`) Encode Consumption
+										- else if (bill.booStatus == 1)
+											button.btn.btn-warning.btn-round Pending
+										- else if (bill.booStatus == 2)
+											button.btn.btn-info.btn-round.generate(billId=`${bill.intId}`) View Consumptions
+	//MODALS
+	#encodeElectricModal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+		.modal-dialog.modal-xl(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Add Electric Bill
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				form#encodeElectricForm
+					.modal-body
+						.table-responsive
+							table.table
+								thead
+									tr
+										th Stall ID
+										th Last Month Meter Reading
+										th Current Month Meter Reading
+								tbody#encodeElectricModalTableBody
+					.modal-footer
+						button#encodeElectricSave.btn.btn-primary(type='submit') Save
+	#generateModal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+		.modal-dialog.modal-xl(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Generate Bill of Tenants
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				.modal-body
+					.table-responsive
+						table.table
+							thead
+								tr
+									th Stall ID
+									th Previous Meter Reading
+									th Current Meter Reading
+									th Consumption
+									th Amount Due
+							tbody#generateModalTableBody
+block contentScript
+	script(src='/assets/plugins/pdfmake/pdfmake.min.js')
+	script(src='/assets/plugins/pdfmake/vfs_fonts.js')
+	script.
+		$(document).ready(function(){
+			const utilities = !{JSON.stringify(session.utilities)}
+			$('#electricTable').dataTable();
+			$('.encodeElectricOpen').on('click', function(){
+				const monthNow = moment().format('MM')
+				const yearNow = moment().format('YYYY')
+				if(moment(moment().format('YYYY-MM-DD')).isSameOrAfter(moment(`${yearNow}-${monthNow}-${utilities.intUtilitiesCutOffDay}`).subtract(7, 'days').format('YYYY-MM-DD'))){
+					$.post('/admin/get-readings', {billId: $(this).attr('billId'), type:'electric'})
+					.done(function (data){
+						for(let i = 0; i< data.length; i++){
+							$('#encodeElectricModalTableBody').append(`
+								<tr>
+									<td><strong>${data[i].strStallId}</strong></td>
+									<td><input class="form-control" type="number" disabled="disabled" value="${data[i].intMeterReading}" /></td>
+									<td><input class="form-control input-kwh" contractId="${data[i].intId}" previousReading="${data[i].intMeterReading}" stallId="${data[i].strStallId}" type="number" min="${data[i].intMeterReading}" placeholder="Enter Current Meter Usage" /></td>
+								</tr>`
+							)
+						}
+					})
+					$('#encodeElectricSave').attr('usage', $(this).attr('totalKwh'))
+					$('#encodeElectricSave').attr('amountDue', $(this).attr('amountDue'))
+					$('#encodeElectricSave').attr('dueDate', $(this).attr('dueDate'))
+					$('#encodeElectricSave').attr('billId', $(this).attr('billId'))
+					$('#encodeElectricModal').modal('show')
+				}
+				else{
+					swal({
+						title: `It's not time to encode yet`,
+						text: `You can only encode if today is already a week before the cut off day`,
+						type: 'error'
+					})
+				}
+			})
+			$('#encodeElectricModal').on('hidden.bs.modal', function(){
+				$('#encodeElectricModalTableBody').empty()
+			})
+			$('#encodeElectricSave').on('click', function(e){
+				e.preventDefault()
+				const inputs = $('.input-kwh')
+				let totalInputted = 0;
+				let bills = []
+				for(let c=0; c<inputs.length; c++){
+					if(parseInt(inputs.eq(c).val()) < parseInt(inputs.eq(c).attr('previousReading'))){
+						return swal({
+							title: `Invalid input`,
+							text: `Meter Reading for ${inputs.eq(c).attr('stallId')} is less than the previous reading`,
+							type: 'error'
+						})
+					}
+					if(inputs.eq(c).val() == ''){
+						return swal({
+							title: `Invalid input`,
+							text: `Meter Reading for ${inputs.eq(c).attr('stallId')} has no value`,
+							type: 'error'
+						})
+					}
+					totalInputted = eval(totalInputted+'+'+eval(`${inputs.eq(c).val()}-${inputs.eq(c).attr('previousReading')}`))
+					if(c == inputs.length - 1){
+						const pricePerKwH = eval(`${$(this).attr('amountDue')}/${totalInputted}`).toFixed(2)
+						for(let d=0; d<inputs.length; d++){
+							let usageNow = eval(`${inputs.eq(d).val()}-${inputs.eq(d).attr('previousReading')}`)
+							let amountDueNow = eval(`${pricePerKwH}*${usageNow}`);
+							let adminFeeNow = eval(`${amountDueNow}*${utilities.intAdminFeePercentage}`).toFixed(2)
+							bills.push({
+								contractId: inputs.eq(d).attr('contractId'),
+								previousMeterReading: inputs.eq(d).attr('previousReading'),
+								currentMeterReading: inputs.eq(d).val(),
+								totalUsage: usageNow,
+								amountDue: amountDueNow,
+								adminFee: adminFeeNow,
+								dueDate: $(this).attr('dueDate'),
+								mainBillId: $(this).attr('billId')
+							})
+							if(d == inputs.length-1){
+								$.post('/admin/encode-electric-bill', {lesseeBills: bills})
+								.done(function(){
+									location.href='/admin/electric-consumption'
+								})
+							}
+						}
+					}
+				}
+			})
+			$('.generate').on('click', function (){
+				$.post('/admin/get-encoded',{id: $(this).attr('billId'), type:'electric'})
+				.done(function(data){
+					for(let f=0; f < data.length; f++){
+						$('#generateModalTableBody').append(`
+							<tr>
+								<td><h6 class="text-primary">Stall ${data[f].strStallId}</h6></td>
+								<td>${data[f].intPreviousMeterReading}</td>
+								<td>${data[f].intMeterReading}</td>
+								<td>${data[f].intTotalKwhUsage} KwH</td>
+								<td>P ${eval(`${data[f].dblAmountDue}+${data[f].dblAdminFee}`).toFixed(2)}</td>
+							</tr>
+						`)
+					}
+					$('#generateModal').modal('show')
+				})
+			})
+			$('#generateModal').on('hidden.bs.modal', function() {
+				$('#generateModalTableBody').empty()
+			})
+		})

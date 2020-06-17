@@ -1,0 +1,230 @@
+extends ../../../templates/admin-template.pug
+
+block headAddOns
+	link(rel="stylesheet", href='/assets/now-ui-admin/demo/demo.css')
+	style.
+		.select2-container--default .select2-selection--single{
+			background-color: #fff;
+			border: 1px solid #e3e3e3;
+			border-radius: 30px;
+			padding: 0px 8px;
+			height: 30px;
+		}
+	block contentStyle
+
+block body
+	.sidebar-mini
+		.wrapper
+			.sidebar(data-color='orange')
+				//Tip 1: You can change the color of the sidebar using: data-color="blue | green | orange | red | yellow"
+				.logo
+					a.simple-text.logo-mini(href='javascript:void(0)' style="font-size:11px;")
+						| SMS
+					a.simple-text.logo-normal(href='javascript:void(0)' style="font-size:11px;")
+						| Stall Management System
+					//- .navbar-minimize
+					//-     button#minimizeSidebar.btn.btn-simple.btn-icon.btn-neutral.btn-round
+					//-         i.now-ui-icons.text_align-center.visible-on-sidebar-regular
+					//-         i.now-ui-icons.design_bullet-list-67.visible-on-sidebar-mini
+				.sidebar-wrapper
+					.user
+						.photo
+							img(src='/assets/images/logo.png')
+						.info
+							a.collapsed(data-toggle='collapse', href='#account')
+								span#loginName
+							.clearfix
+							#account.collapse
+								ul.nav
+									li
+										a(href='/admin/logout')
+											span.sidebar-mini-icon L
+											span.sidebar-normal Logout
+					ul#sideNav.nav
+						li#dashboard
+							a(href='/admin')
+								i.now-ui-icons.business_chart-bar-32
+								p Dashboard
+						li
+							a(data-toggle='collapse', href='#maintenance')
+								i.now-ui-icons.ui-2_settings-90
+								p Maintenance
+									b.caret
+							#maintenance.collapse
+								ul.nav
+									li
+										a(href='/admin/stall')
+											span.sidebar-mini-icon Stl
+											span.sidebar-normal  Stall
+									li
+										a(href='/admin/staff')
+											span.sidebar-mini-icon Stf
+											span.sidebar-normal Staff
+									li
+										a(href='/admin/lessee')
+											span.sidebar-mini-icon L
+											span.sidebar-normal Lessee
+									li
+										a(href='/admin/electric-bill')
+											span.sidebar-mini-icon EB
+											span.sidebar-normal Electric Bill
+									li
+										a(href='/admin/water-bill')
+											span.sidebar-mini-icon WB
+											span.sidebar-normal Water Bill
+									li
+										a(href='/admin/ticket')
+											span.sidebar-mini-icon T
+											span.sidebar-normal Tickets
+						li
+							a(data-toggle='collapse', href='#transaction')
+								i.now-ui-icons.files_paper
+								p Transaction
+									b.caret
+							#transaction.collapse
+								ul.nav
+									li
+										a(href='/admin/rental')
+											span.sidebar-mini-icon L
+											span.sidebar-normal Leasing
+									li
+										a(href='/admin/electric-consumption')
+											span.sidebar-mini-icon EC
+											span.sidebar-normal Electric Consumption
+									li
+										a(href='/admin/water-consumption')
+											span.sidebar-mini-icon WC
+											span.sidebar-normal Water Consumption
+									li
+										a(href='/admin/payment')
+											span.sidebar-mini-icon P
+											span.sidebar-normal Payment
+									li
+										a(href='/admin/issue')
+											span.sidebar-mini-icon RI
+											span.sidebar-normal Reported Issues
+									li
+										a(href='/admin/generate-bill')
+											span.sidebar-mini-icon GB
+											span.sidebar-normal Generate Bills
+						li#utilities
+							a(href='/admin/utilities')
+								i.now-ui-icons.ui-1_settings-gear-63
+								p Utilities
+						li#queries
+							a(href='/admin/queries')
+								i.now-ui-icons.design_bullet-list-67
+								p Queries
+						li#reports
+							a(href='/admin/reports')
+								i.now-ui-icons.education_paper
+								p Reports
+			.main-panel(style="padding-top:100px")
+				.content
+					block content
+	#editStaffModal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+		.modal-dialog(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Edit My Account
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				form#editStaffForm(method='POST' action='/admin/edit-staff')
+					input(type='hidden' name="staffId")
+					.modal-body
+						h6 Staff Details
+						.form-group
+							label First Name
+								small.text-danger  *
+							input.form-control(type='text' name='firstName' placeholder='Enter First Name')
+						.form-group
+							label Middle Name
+							input.form-control(type='text' name='middleName' placeholder='Enter Middle Name')
+						.form-group
+							label Last Name
+								small.text-danger  *
+							input.form-control(type='text' name='lastName' placeholder='Enter Last Name')
+						.form-group
+							label Email Address
+								small.text-danger  *
+							input.form-control(type='text' name='email' placeholder='Enter Email Address')
+						.form-group
+							label Phone Number
+								small.text-danger  *
+							input.form-control(type='text' name='phoneNumber' placeholder='Enter Phone Number')
+						h6 Account Details
+						.form-group
+							label Username
+								small.text-danger  *
+							input.form-control(type='text' name='username' placeholder='Enter Username')
+						.form-group
+							label Password
+								small.text-danger  *
+							input.form-control(type='password' name='password' placeholder='Enter Password')
+					.modal-footer
+						button#editStaffSave.btn.btn-primary(type='submit') Save
+block scriptAddOns
+	script.
+		$(document).ready(function(){
+			const passedVar = !{JSON.stringify(url)}
+			const passedSession = !{JSON.stringify(session)}
+			const utilities = !{JSON.stringify(session.utilities)}
+			const url = passedVar.split('?');
+			if(url[0] == '/'){
+				$('#dashboard').addClass('active')
+			}
+			else if(url[0] == '/utilities'){
+				$('#utilities').addClass('active')
+			}
+			else if(url[0] == '/queries'){
+				$('#queries').addClass('active')
+			}
+			else if(url[0] == '/reports'){
+				$('#reports').addClass('active')
+			}
+			
+			if(passedSession.admin){
+				$('#loginName').append(`Admin<b class='caret'></b>`)
+			}
+			else{
+				$('#loginName').append(`${passedSession.staff.strFirstName}<b class='caret'></b>`)
+				$('#account ul.nav').append(`<li>
+						<a id="editAccountDetails" href="javascript:">
+							<span class="sidebar-mini-icon">E</span>
+							<span class="sidebar-normal">Edit Account Details</span>
+						</a>
+					</li>`
+				)
+			}
+			$(document).on('click', '#editAccountDetails', function(){
+				$.post('/admin/get-staff-details', {staffId: passedSession.staff.intId}).done(function(data){
+					$('#editStaffForm input[name="firstName"]').val(data.strFirstName)
+					$('#editStaffForm input[name="middleName"]').val(data.strMiddleName)
+					$('#editStaffForm input[name="lastName"]').val(data.strLastName)
+					$('#editStaffForm input[name="email"]').val(data.strEmail)
+					$('#editStaffForm input[name="phoneNumber"]').val(data.strPhone)
+					$('#editStaffForm input[name="username"]').val(data.strUsername)
+					$('#editStaffForm input[name="password"]').val(data.strPassword)
+					$('#editStaffForm input[name="staffId"]').val(data.intId)
+					$('#editStaffModal').modal('show')
+				})
+			})
+			$.post('/admin/check-bills-to-encode').done(function(data){
+				const monthNow = moment().format('MM')
+				const yearNow = moment().format('YYYY')
+				if(moment(moment().format('YYYY-MM-DD')).isSameOrAfter(moment(`${yearNow}-${monthNow}-${utilities.intUtilitiesCutOffDay}`).subtract(7, 'days').format('YYYY-MM-DD'))){
+					let notifString = `The following bills has no encoded consumptions:<br><br>`
+					for(let s = 0; s < data.length; s++){
+						notifString+=`${data[s].type} Bill for ${data[s].billDate}<br>`
+						if(s == data.length - 1){
+							swal({
+								type: 'info',
+								title: `It's time to encode bills!`,
+								html: notifString
+							})
+						}
+					}
+				}
+			})
+		})
+	block contentScript

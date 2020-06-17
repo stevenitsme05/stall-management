@@ -1,0 +1,37 @@
+{
+  "name": "stall-management",
+  "version": "1.0.0",
+  "description": "A quick and simple ExpressJS boilerplate",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stevenitsme05/stall-management.git"
+  },
+  "keywords": [
+    "expressjs",
+    "boilerplate"
+  ],
+  "author": "Steven Gragg",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stevenitsme05/stall-management/issues"
+  },
+  "homepage": "https://github.com/stevenitsme05/stall-management#readme",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "dotenv": "^4.0.0",
+    "express": "^4.15.3",
+    "express-session": "^1.15.4",
+    "method-override": "^2.3.9",
+    "moment": "^2.23.0",
+    "morgan": "^1.8.2",
+    "multer": "^1.4.1",
+    "mysql": "^2.13.0",
+    "number-to-words": "1.2.4",
+    "pug": "^2.0.0-rc.2",
+    "serve-static": "^1.12.3"
+  }
+}

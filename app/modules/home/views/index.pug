@@ -1,0 +1,52 @@
+extends ./template.pug
+
+block contentStyle
+	title Lessee -Stall Management System
+
+block content
+	.page-header.header-filter(filter-color='orange')
+		.page-header-image(style='background-image:url(/assets/now-ui/img/login.jpg)')
+		.content
+			.container(style="height: unset; color: black")
+				.col-md-12
+					.card
+						.card-header
+							h4.card-title Your Bills
+						.card-body
+							.table-responsive
+								table#billTable.table
+									thead
+										tr
+											th Bill Type
+											th Bill Reference No.
+											th Amount Due
+											th Due Date
+											th Status
+									tbody
+										each bill in bills
+											tr
+												- if(bill.type == 'E')
+													td Electricity
+												- else if(bill.type == 'W')
+													td Water
+												- else if(bill.type == 'R')
+													td Rental
+												td #{bill.intId}
+												td #{`${bill.type == 'E' || bill.type == 'W' ? `${eval(`${bill.dblAmountDue}+${bill.dblAdminFee}`).toFixed(2)}`: `${bill.dblAmountDue}`}`}
+												td #{bill.datDueDate}
+												- if(bill.strPaymentReferenceNo == null)
+													td 
+														span.badge.badge-danger Unpaid
+												- else
+													td 
+														a.badge.badge-success.text-white.viewPayment(href='javascript:' paymentRef=`${bill.strPaymentReferenceNo}`) Paid
+block contentScript
+	script.
+		$(document).ready(function(){
+			$('.viewPayment').on('click', function(){
+				swal({
+					type: 'info',
+					text: `Payment reference code of this bill is "${$(this).attr('paymentRef')}"`
+				})
+			})
+		})

@@ -1,0 +1,206 @@
+extends ./template.pug
+
+block content
+	.row
+		.col-md-12
+			.card
+				.card-header
+					h4.card-title Staffs
+				.card-body
+					.toolbar
+						button.btn.btn-round.btn-success(data-toggle='modal' data-target='#addStaffModal') + Add Staff
+					br
+					table#staffTable.table.table-bordered.table-striped(cellspacing='0')
+						thead
+							tr
+								th Name
+								th Username
+								th Actions
+						tbody
+							each staff in staffs
+								tr
+									td #{staff.strFirstName} #{staff.strMiddleName} #{staff.strLastName}
+									td #{staff.strUsername}
+									td
+										//- a.btn.btn-round.btn-warning.btn-icon.edit(href='javascript:void(0)' staffId=`${staff.intId}`)
+										//- 	i.now-ui-icons.design_scissors
+										a.btn.btn-round.btn-danger.btn-icon.remove(href='javascript:void(0)' staffId=`${staff.intId}`)
+											i.now-ui-icons.ui-1_simple-remove
+	#addStaffModal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+		.modal-dialog(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Add Staff
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				form#addStaffForm(method='POST' action='/admin/add-staff')
+					.modal-body
+						h6 Staff Details
+						.form-group
+							label First Name
+								small.text-danger  *
+							input.form-control(type='text' name='firstName' placeholder='Enter First Name')
+						.form-group
+							label Middle Name
+							input.form-control(type='text' name='middleName' placeholder='Enter Middle Name')
+						.form-group
+							label Last Name
+								small.text-danger  *
+							input.form-control(type='text' name='lastName' placeholder='Enter Last Name')
+						.form-group
+							label Email Address
+								small.text-danger  *
+							input.form-control(type='text' name='email' placeholder='Enter Email Address')
+						.form-group
+							label Phone Number
+								small.text-danger  *
+							input.form-control(type='text' name='phoneNumber' placeholder='Enter Phone Number')
+						h6 Account Details
+						.form-group
+							label Username
+								small.text-danger  *
+							input.form-control(type='text' name='username' placeholder='Enter Username')
+						.form-group
+							label Password
+								small.text-danger  *
+							input.form-control(type='password' name='password' placeholder='Enter Password')
+					.modal-footer
+						button#addStaffSave.btn.btn-primary(type='submit') Save
+	#editStaffModal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+		.modal-dialog(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Edit Staff
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				form#editStaffForm(method='POST' action='/admin/edit-staff')
+					input(type='hidden' name="staffId")
+					.modal-body
+						h6 Staff Details
+						.form-group
+							label First Name
+								small.text-danger  *
+							input.form-control(type='text' name='firstName' placeholder='Enter First Name')
+						.form-group
+							label Middle Name
+							input.form-control(type='text' name='middleName' placeholder='Enter Middle Name')
+						.form-group
+							label Last Name
+								small.text-danger  *
+							input.form-control(type='text' name='lastName' placeholder='Enter Last Name')
+						.form-group
+							label Email Address
+								small.text-danger  *
+							input.form-control(type='text' name='email' placeholder='Enter Email Address')
+						.form-group
+							label Phone Number
+								small.text-danger  *
+							input.form-control(type='text' name='phoneNumber' placeholder='Enter Phone Number')
+						h6 Account Details
+						.form-group
+							label Username
+								small.text-danger  *
+							input.form-control(type='text' name='username' placeholder='Enter Username')
+						.form-group
+							label Password
+								small.text-danger  *
+							input.form-control(type='password' name='password' placeholder='Enter Password')
+					.modal-footer
+						button#editStaffSave.btn.btn-primary(type='submit') Save
+block contentScript
+	script.
+		$(document).ready(function(){
+			$('#staffTable').dataTable()
+			$(document).on('click', '.remove', function(){
+				$.post('/admin/delete-staff', {staffId: $(this).attr('staffId')}).done(function(){
+					location.href='/admin/staff'
+				})
+			})
+			$(document).on('click', '.edit', function(){
+				$.post('/admin/get-staff-details', {staffId: $(this).attr('staffId')}).done(function(data){
+					$('#editStaffForm input[name="firstName"]').val(data.strFirstName)
+					$('#editStaffForm input[name="middleName"]').val(data.strMiddleName)
+					$('#editStaffForm input[name="lastName"]').val(data.strLastName)
+					$('#editStaffForm input[name="email"]').val(data.strEmail)
+					$('#editStaffForm input[name="phoneNumber"]').val(data.strPhone)
+					$('#editStaffForm input[name="username"]').val(data.strUsername)
+					$('#editStaffForm input[name="password"]').val(data.strPassword)
+					$('#editStaffForm input[name="staffId"]').val(data.intId)
+					$('#editStaffModal').modal('show')
+				})
+			})
+			$('input[name="phoneNumber"]').mask('(+63) 900-000-0000',{
+				translation:{
+					'0':{
+						pattern: /[0-9]/
+					},
+					'9':{
+						pattern: /[9]/
+					}
+				}
+			})
+			$('#addStaffForm').validate({
+				rules:{
+					firstName:{
+						required:true
+					},
+					lastName:{
+						required:true
+					},
+					address:{
+						required:true
+					},
+					email:{
+						required:true,
+						email: true
+					},
+					phoneNumber:{
+						required:true,
+						minlength: 18
+					},
+					username:{
+						required:true
+					},
+					password:{
+						required:true
+					},
+				},
+				messages:{
+					phoneNumber:{
+						minlength: 'Please enter a valid Philippine mobile number'
+					}
+				}
+			})
+			$('#editStaffForm').validate({
+				rules:{
+					firstName:{
+						required:true
+					},
+					lastName:{
+						required:true
+					},
+					address:{
+						required:true
+					},
+					email:{
+						required:true,
+						email: true
+					},
+					phoneNumber:{
+						required:true,
+						minlength: 18
+					},
+					username:{
+						required:true
+					},
+					password:{
+						required:true
+					},
+				},
+				messages:{
+					phoneNumber:{
+						minlength: 'Please enter a valid Philippine mobile number'
+					}
+				}
+			})
+		})

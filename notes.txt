@@ -1,0 +1,86 @@
+- Check db errors /
+- Complete Payment module /
+- Polish Contract generation / 
+- Start Lessee portal /
+- Notifications for bill /
+- Start ticketing module /
+- Start Utilities(Stall Price by type, Lease add-on price) /
+
+*Comments
+- Stall Price sa Leasing /
+- Stall Description (Pangalan ng Stall) /
+- Table mode yung Consumption, Encoded Consumption, Generate Bills /
+- 2 Decimal Places lang /
+- Lower Set Interval For Rental Bill Generation /
+
+*View for
+- Lessee /
+- Leasing /
+- Payment /
+
+*NOTES
+- Generate Receipt on Payment 
+- Validation para sa sabay magencode
+- Edit/Delete
+    * Lessee /
+    * Contract (Terminate) /
+- Auto Terminate Contract /
+
+** FOR FINAL DEF
+- Cut off Utilities Bill /
+- 5% Admin Fee on Utilities Bill /
+- Report Issue Process
+    1. Lessee Reports Issue /
+    2. Admin Creates Ticket and Assign Staff /
+    3. Staff Changes Status /
+- Notification for bills to be encoded /
+- Change Username and Password of Lessee and Staffs /
+- Start Dashboard /
+- Start Queries /
+- Start Reports /
+- Stall Map /
+
+** Queries
+- Lessee /
+- Contract /
+- Staffs /
+- Stalls /
+
+** Reports
+- Paid and Unpaid Tenants /
+- Expiring Contracts /
+- Revenue /
+
+REVISIONS
+- Delete Stall /
+- Edit Account Staff Side /
+- Prompt edit username and password upon logging in lessee /
+- Account ID for applying leasing /
+- Email Validation /
+- Max file size dropify /
+- Add Lessee Business Permit, Mayor's Permit /
+- Remove Generate Bills on E/W Consumption /
+- Ticket Details /
+- Remove Delete Payment /
+- Delete Leasing /
+
+FINAL REVISIONS
+- Stall Map /
+  1. Increase Stroke /
+  2. Increase Width and Height /
+- Ticket Details /
+  1. Lessee Name /
+  2. Stall ID /
+- Edit Lessee Empty Modal /
+- Sweetalert when Deleting/Terminating Contract /
+- Sample Contract Preview /
+- Dropdown of IDs + NOTE /
+- Company Requirements add DTI Permit /
+- One Bill only /
+- Pending Leasing /
+- Reports pdf
+
+SQL DUMP EXAMPLE
+mysqldump -u root -p -d -B stallv3>stallv3-2.sql
+
+FABRIC.JS - drag n drop module

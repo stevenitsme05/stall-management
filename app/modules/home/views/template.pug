@@ -1,0 +1,140 @@
+//- This is how we extend a template using the 'extends' keyword
+extends ../../../templates/user-template.pug
+
+block headAddOns
+	block contentStyle
+
+block body
+	nav.navbar.navbar-expand-lg.bg-white.fixed-top.navbar-transparent(color-on-scroll='500')
+		.container
+			- if (typeof session != 'undefined')
+				.navbar-translate
+					p.navbar-brand Welcome, #{session.strFirstName}
+				.collapse.navbar-collapse(data-nav-image='/assets/now-ui/img//blurred-image-1.jpg', data-color='orange')
+					ul.navbar-nav.ml-auto
+						li.nav-item.dropdown
+							a#navbarDropdownMenuLink.nav-link.dropdown-toggle(href='#', data-toggle='dropdown')
+								i.now-ui-icons.text_align-left
+								p Account
+							.dropdown-menu.dropdown-menu-right(aria-labelledby='navbarDropdownMenuLink')
+								a.dropdown-item(href='/')
+									i.now-ui-icons.education_paper
+									| Bills
+								a.dropdown-item(href='/my-issues')
+									i.now-ui-icons.travel_info
+									| Issues Status
+								a#reportIssue.dropdown-item(href='javascript:' lesseeId=`${session.strId}`)
+									i.now-ui-icons.ui-2_chat-round
+									| Report Issue
+								a#change.dropdown-item(href='javascript:' lesseeId=`${session.strId}`)
+									i.now-ui-icons.ui-1_settings-gear-63
+									| Change Username and Password
+								a.dropdown-item(href='/logout')
+									i.now-ui-icons.arrows-1_share-66
+									| Logout
+			- else
+				.navbar-translate
+					p.navbar-brand Stall Management System
+	block content
+	#issueModal.modal.fade(tabindex='false', role='dialog', aria-hidden='true')
+		.modal-dialog(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Report an Issue
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				.modal-body#issueModalBody
+					.form-group
+						label Stall ID
+						select#stallSelect.selectpicker.form-control
+					.form-group
+						label Issue Subject
+						input#issueSubject.form-control(type='text' placeholder='Enter Issue')
+					.form-group
+						label Message
+						textarea#issueMessage.form-control(rows='3' placeholder='Write your message here...')
+				.modal-footer
+					button#sendIssue.btn.btn-primary.btn-round Send
+	#changeModal.modal.fade(tabindex='false', role='dialog', aria-hidden='true')
+		.modal-dialog(role='document')
+			.modal-content
+				.modal-header
+					h5.modal-title Change Username and Password
+					button.close(type='button', data-dismiss='modal', aria-label='Close')
+						span(aria-hidden='true') ×
+				.modal-body#changeModalBody
+					h6 Note: If you don't want to change it, leave it blank
+					br
+					.form-group
+						label Username
+						input#username.form-control(type='text' placeholder='Enter new username')
+					.form-group
+						label Password
+						input#password.form-control(type='password' placeholder='Enter new password')
+				.modal-footer
+					button#saveChange.btn.btn-primary.btn-round Save
+block scriptAddOns
+	script.
+		$(document).ready(function(){
+			const session = !{JSON.stringify(session)}
+			if(session.booFirstLogin == 0){
+				swal({
+					title: `It's your first login, do you want to change your username?`,
+					type: 'question',
+					showCancelButton: true,
+					confirmButtonText: 'Yes',
+					cancelButtonText: 'No',
+					confirmButtonColor: '#4fbf41',
+					cancelButtonColor: '#bf4141'
+				}).then(value => {
+					$.post('/update-login', {
+						id: session.strId
+					})
+					if(value){
+						$('#changeModal').modal('show')
+					}
+				})
+			}
+			$('#reportIssue').on('click', function(){
+				$.post('/get-user-stalls',{
+					id: $(this).attr('lesseeId')
+				}).done(function(data){
+					for(let n = 0; n < data.length; n++){
+						$('#stallSelect').append(`<option value='${data[n].intId}'>${data[n].strStallId}</option>`)
+					}
+					$('#stallSelect').selectpicker('refresh')
+					$('#issueModal').modal('show')
+				})
+			})
+			$('#issueModal').on('hidden.bs.modal', function(){
+				$('#stallSelect').empty()
+				$('#issueSubject').val('')
+				$('#issueMessage').val('')
+			})
+			$('#sendIssue').on('click', function(){
+				$.post('/create-issue',{
+					contractId: $('#stallSelect').val(),
+					subject: $('#issueSubject').val(),
+					message: $('#issueMessage').val()
+				}).done(function (){
+					swal({
+						type: 'success',
+						text: `You have successfully sent an issue report`
+					})
+					$('#issueModal').modal('hide')
+				})
+			})
+			$('#change').on('click', function(){
+				$('#changeModal').modal('show')
+			})
+			$('#saveChange').on('click', function(){
+				$.post('/update-account', {
+					username: $('#username').val(),
+					password: $('#password').val(),
+					lesseeId: $('#change').attr('lesseeId')
+				}).done(function(){
+					location.href='/'
+				})
+			})
+		})
+	block contentScript
