@@ -30,3 +30,17 @@ If you want to enable the database part of the application, then you have to che
 - Your table should have at least one record
 
 Once all of those are satisfied, you should be able to see your list of users in the `/index` route when you run the app.
+
+## Access Admin and Staff
+
+URL: localhost:(your port)/admin/login
+(Admin)
+username: admin
+password: admin
+(Staff)
+username: staff
+password: staff
+## Access Tenant/Lessee
+
+URL: localhost:(your port)/login
+** Create Lessee Account from Admin
